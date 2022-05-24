@@ -63,6 +63,21 @@ async function run() {
         res.send(result)
 
       })
+      app.get('/allorder',async(req,res)=>{
+        const query = {}
+        const cursol = ordercollection.find(query).sort({_id:-1});
+        const result =await cursol.toArray();
+        res.send(result)
+
+      })
+      // remove orders from db
+      app.delete('/remove/:id',async(req,res)=>{
+        const id = req.params.id
+       
+        const query = {_id:ObjectId(id)}
+        const result = await ordercollection.deleteOne(query)
+        res.send(result)
+      })
       //product details single item
       app.get('/details/:id', async(req,res)=>{
         const id = req.params.id
@@ -76,6 +91,7 @@ async function run() {
         const result = await ordercollection.insertOne(booking);
         return res.send({ success: true, result });
       });
+
       //ad product to db
       app.post('/addproduct', verifyJWT, verifyAdmin, async (req, res) => {
         const product= req.body;
