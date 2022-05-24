@@ -76,6 +76,12 @@ async function run() {
         const result = await ordercollection.insertOne(booking);
         return res.send({ success: true, result });
       });
+      //ad product to db
+      app.post('/addproduct', verifyJWT, verifyAdmin, async (req, res) => {
+        const doctor = req.body;
+        const result = await productcollection.insertOne(doctor);
+        res.send(result);
+      });
       //insert user
     app.put('/user/:email', async (req, res) => {
       const email = req.params.email;
