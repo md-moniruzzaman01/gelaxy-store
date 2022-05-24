@@ -78,10 +78,18 @@ async function run() {
       });
       //ad product to db
       app.post('/addproduct', verifyJWT, verifyAdmin, async (req, res) => {
-        const doctor = req.body;
-        const result = await productcollection.insertOne(doctor);
+        const product= req.body;
+        const result = await productcollection.insertOne(product);
         res.send(result);
       });
+      //remove product from db
+      app.delete('/remove/:id',async(req,res)=>{
+        const id = req.params.id
+       
+        const query = {_id:ObjectId(id)}
+        const result = await productcollection.deleteOne(query)
+        res.send(result)
+      })
       //insert user
     app.put('/user/:email', async (req, res) => {
       const email = req.params.email;
