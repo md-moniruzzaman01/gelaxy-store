@@ -70,8 +70,23 @@ async function run() {
         res.send(result)
 
       })
+      //update quantity by parchesing
+      app.put('/update/:id',async(req,res)=>{
+        const id = req.params.id;
+        const updataquantity= req.body.quantity
+       
+        const filter = {_id:ObjectId(id)}
+        const options = { upsert: true };
+        const updateDoc = {
+          $set: {
+            quantity: updataquantity
+          },
+        };
+        const result = await productcollection.updateOne(filter, updateDoc, options);
+        res.send(result)
+      })
       // remove orders from db
-      app.delete('/remove/:id',async(req,res)=>{
+      app.delete('/remove/order/:id',async(req,res)=>{
         const id = req.params.id
        
         const query = {_id:ObjectId(id)}
@@ -165,7 +180,12 @@ async function run() {
         const email = req.params.email;
         const user = await userCollection.findOne({ email: email });
         const isAdmin = user.role === 'admin';
-        res.send({ admin: isAdmin })
+        if (isAdmin) {
+         return res.send({ admin: isAdmin })
+        }else{
+          return res.status(403).send({ message: 'forbidden access' });
+        }
+
       })
 
 
