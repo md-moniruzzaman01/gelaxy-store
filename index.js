@@ -63,6 +63,14 @@ async function run() {
         res.send(result)
 
       })
+      //send product all data
+      app.get('/popularproduct',async(req,res)=>{
+        const query = {}
+        const cursol = productcollection.find(query).sort({_id:-1});
+        const result =await cursol.limit(6).toArray();
+        res.send(result)
+
+      })
       app.get('/allorder',async(req,res)=>{
         const query = {}
         const cursol = ordercollection.find(query).sort({_id:-1});
