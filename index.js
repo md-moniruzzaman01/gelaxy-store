@@ -160,6 +160,11 @@ async function run() {
     
     return res.send({ success: true, result });
   });
+    //all comments
+    app.get('/allcomments',verifyJWT, async (req, res) => {
+      const comments = await commentscollection.find().limit(6).toArray();
+      res.send(comments);
+    });
     //all user api
     app.get('/user',verifyJWT, async (req, res) => {
       const users = await userCollection.find().toArray();
