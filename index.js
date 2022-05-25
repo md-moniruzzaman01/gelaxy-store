@@ -64,7 +64,7 @@ async function run() {
 
       })
       //send product all data
-      app.get('/popularproduct',async(req,res)=>{
+      app.get('/popular/product',async(req,res)=>{
         const query = {}
         const cursol = productcollection.find(query).sort({_id:-1});
         const result =await cursol.limit(6).toArray();
@@ -91,6 +91,29 @@ async function run() {
           },
         };
         const result = await productcollection.updateOne(filter, updateDoc, options);
+        res.send(result)
+      })
+      //update user info
+      app.put('/update/info/:email',async(req,res)=>{
+        const email = req.params.email;
+        const phone= req.body.phone;
+        const education= req.body.education;
+        const location= req.body.location;
+        const company= req.body.company;
+        
+        const filter = { email: email };
+        const options = { upsert: true };
+        const updateDoc = {
+          $set: {
+            phone: phone,
+            education:education,
+            location:location,
+            company:company
+
+
+          },
+        };
+        const result = await userCollection.updateOne(filter, updateDoc, options);
         res.send(result)
       })
       // remove orders from db
@@ -159,17 +182,17 @@ async function run() {
   app.post('/comment', async (req, res) => {
     const comment = req.body;
     const query = { review: comment.email}
-    const exists = await commentscollection.findOne(query);
-    if (exists) {
-      return res.send({ success: false, comment: exists })
-    }
+    // const exists = await commentscollection.findOne(query);
+    // if (exists) {
+    //   return res.send({ success: false, comment: exists })
+    // }
     const result = await commentscollection.insertOne(comment);
     
     
     return res.send({ success: true, result });
   });
     //all comments
-    app.get('/allcomments',verifyJWT, async (req, res) => {
+    app.get('/allcomments', async (req, res) => {
       const comments = await commentscollection.find().limit(6).toArray();
       res.send(comments);
     });
@@ -196,8 +219,9 @@ async function run() {
         if (isAdmin) {
          return res.send({ admin: isAdmin })
         }else{
-          return res.status(403).send({ message: 'forbidden access' });
+          return res.send({ admin: false })
         }
+
 
       })
 
