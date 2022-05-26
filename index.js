@@ -3,8 +3,9 @@ const app = express()
 const port =process.env.PORT || 5000;
 const cors = require('cors')
 const jwt = require('jsonwebtoken');
-// requre dotenv
 require('dotenv').config();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+// requre dotenv
 // mongo require
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
@@ -16,7 +17,6 @@ app.use(express.json());
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.crgm6.mongodb.net/?retryWrites=true&w=majority`;
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
-
 
 
 //jwt verify
@@ -42,6 +42,7 @@ async function run() {
     const productcollection = client.db("gelaxy_store").collection("product");
     const ordercollection = client.db("gelaxy_store").collection("order");
     const commentscollection = client.db("gelaxy_store").collection("review");
+    const paymentCollection = client.db("gelaxy_store").collection("payment");
 
     const verifyAdmin = async (req, res, next) => {
       const requester = req.decoded.email;
@@ -193,13 +194,22 @@ async function run() {
   });
     //all comments
     app.get('/allcomments', async (req, res) => {
-      const comments = await commentscollection.find().limit(6).toArray();
+      const comments = await commentscollection.find().sort({_id:-1}).limit(3).toArray();
       res.send(comments);
     });
     //all user api
     app.get('/user',verifyJWT, async (req, res) => {
       const users = await userCollection.find().toArray();
       res.send(users);
+    });
+    //all user api
+    app.get('/profile',verifyJWT, async (req, res) => {
+      const decodedEmail = req.decoded.email;
+        const query = { email: decodedEmail };
+        const user = await userCollection.findOne(query);
+        return res.send(user);
+      
+      
     });
      // create admin
      app.put('/user/admin/:email', verifyJWT,verifyAdmin, async (req, res) => {
@@ -225,6 +235,47 @@ async function run() {
 
       })
 
+
+
+
+
+      ///payment
+
+      app.get('/order/item/:id',verifyJWT, async(req,res)=>{
+        const id = req.params.id
+        const query = {_id:ObjectId(id)}
+        const item = await ordercollection.findOne(query)
+        res.send(item)
+      })
+      app.post('/create-payment-intent', async(req, res) =>{
+        const order = req.body;
+        const price = order.totalprice;
+        const amount = price*100;
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount : amount,
+          currency: 'usd',
+          payment_method_types:['card']
+        });
+        res.send({clientSecret: paymentIntent.client_secret})
+      });
+  
+
+
+      app.patch('/payment/:id', verifyJWT, async(req, res) =>{
+        const id  = req.params.id;
+        const payment = req.body;
+        const filter = {_id: ObjectId(id)};
+        const updatedDoc = {
+          $set: {
+            paid: true,
+            transactionId: payment.transactionId
+          }
+        }
+  
+        const result = await paymentCollection.insertOne(payment);
+        const updatedBooking = await ordercollection.updateOne(filter, updatedDoc);
+        res.send(updatedBooking);
+      })
 
   }finally{
 
